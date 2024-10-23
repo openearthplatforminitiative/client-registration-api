@@ -1,0 +1,171 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-registration-api
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: client-registration-api
+  template:
+    metadata:
+      labels:
+        app: client-registration-api
+#      annotations:
+#        prometheus.io/scrape: "true"
+#        prometheus.io/port: "8080"
+#        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - image: ghcr.io/openearthplatforminitiative/client-registration-api:latest
+          name: client-registration-api
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_ROOT_PATH
+              value: "/client-registration"
+            - name: VERSION
+              value: "latest"
+            - name: API_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: openepi-apps-config
+                  key: api_domain
+            - name: KC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: kc_url
+            - name: KC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: admin_password
+      initContainers:
+        - name: client-registration-auth
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.2.1
+          restartPolicy: Always
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4181
+          env:
+            - name: OAUTH2_PROXY_PROVIDER
+              value: "keycloak-oidc"
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: client_id
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: client_secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: cookie_secret
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              value: /oauth2/callback
+            - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: auth_url
+            - name: OAUTH2_PROXY_COOKIE_SECURE
+              value: "true"
+            - name: OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL
+              value: "true"
+            - name: OAUTH2_PROXY_HTTP_ADDRESS
+              value: "0.0.0.0:4181"
+            - name: OAUTH2_PROXY_UPSTREAMS
+              value: "static://200"
+            - name: OAUTH2_PROXY_SKIP_PROVIDER_BUTTON
+              value: "true"
+            - name: OAUTH2_PROXY_SSL_UPSTREAM_INSECURE_SKIP_VERIFY
+              value: "true"
+            - name: OAUTH2_PROXY_SCOPE
+              value: "openid email profile"
+            - name: OAUTH2_PROXY_SET_XAUTHREQUEST
+              value: "true"
+            - name: OAUTH2_PROXY_REVERSE_PROXY
+              value: "true"
+            - name: OAUTH2_PROXY_COOKIE_DOMAINS
+              value: ".openepi.io"
+            - name: OAUTH2_PROXY_EMAIL_DOMAINS
+              value: "*"
+            - name: OAUTH2_PROXY_SESSION_COOKIE_MINIMAL
+              value: "true"
+            - name: OAUTH2_PROXY_PROXY_PREFIX
+              value: "/oauth2"
+            - name: OAUTH2_PROXY_ALLOW_RELATIVE_REDIRECT_URL
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-registration-api
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+    - name: auth
+      port: 4181
+      targetPort: 4181
+  selector:
+    app: client-registration-api
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix-client-registration
+spec:
+  stripPrefix:
+    prefixes:
+      - /client-registration
+    forceSlash: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: client-registration-auth
+spec:
+  forwardAuth:
+    address: http://client-registration-api.apps.svc.cluster.local:4181
+    trustForwardHeader: true
+    authResponseHeaders:
+        - X-Forwarded-User
+        - X-Auth-Request-Access-Token
+        - X-Auth-Request-Email
+        - X-Auth-Request-User
+        - X-Auth-Request-Username
+        - X-Auth-Request-Preferred-Username
+        - Authorization
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: client-registration-api
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - kind: Rule
+    match: PathPrefix(`/client-registration`) && !PathPrefix(`/client-registration/metrics`)
+    services:
+    - kind: Service
+      name: client-registration-api
+      port: 80
+    middlewares:
+    - name: client-registration-auth
+    - name: stripprefix-client-registration
+  - kind: Rule
+    match: PathPrefix(`/oauth2`) && !PathPrefix(`/oauth2/metrics`)
+    services:
+    - kind: Service
+      name: client-registration-api
+      port: 4181
