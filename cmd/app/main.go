@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/openearthplatforminitiative/client-registration-api/internal/config"
-	"github.com/openearthplatforminitiative/client-registration-api/internal/routes"
+	"github.com/openearthplatforminitiative/client-registration-api/config"
+	"github.com/openearthplatforminitiative/client-registration-api/routes"
 	"log"
 )
 
@@ -13,13 +13,14 @@ func init() {
 }
 
 func main() {
+
 	router := gin.Default()
-	routes.InitRoutes(router)
+	routes.InitRoutes(router, config.AppSettings)
 
 	log.Println("Starting server on", config.AppSettings.GetServerBindAddress())
 	err := router.Run(config.AppSettings.GetServerBindAddress())
 	if err != nil {
-		log.Println("Failed to start server")
+		log.Printf("Failed to start server: %v", err)
 		return
 	}
 }
