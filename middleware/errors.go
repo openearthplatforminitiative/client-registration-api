@@ -5,7 +5,7 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/openearthplatforminitiative/client-registration-api/keycloak"
+	"github.com/openearthplatforminitiative/client-registration-api/models"
 	"net/http"
 )
 
@@ -27,7 +27,7 @@ func ErrorHandler() gin.HandlerFunc {
 			var ve validator.ValidationErrors
 
 			switch {
-			case errors.Is(err, keycloak.ClientNotFoundErr):
+			case errors.Is(err, models.ClientNotFoundErr):
 				errorCode = http.StatusNotFound
 				errorMsgs = append(errorMsgs, ErrorMsg{Message: "Client with id not found"})
 			case errors.As(err, &apiError):

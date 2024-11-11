@@ -20,7 +20,7 @@ func (cc *ClientsHandler) Clients(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, gin.H{"clients": clients})
+	context.JSON(http.StatusOK, clients)
 }
 
 func (cc *ClientsHandler) Client(context *gin.Context) {

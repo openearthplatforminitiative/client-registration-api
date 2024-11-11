@@ -9,7 +9,7 @@ func UserRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.Request.Header.Get("X-Auth-Request-Preferred-Username")
 		if username == "" {
-			c.JSON(http.StatusBadRequest, gin.H{
+			c.JSON(http.StatusForbidden, gin.H{
 				"error": "Not supported without user",
 			})
 			c.Abort()

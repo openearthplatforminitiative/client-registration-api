@@ -2,15 +2,14 @@ package keycloak
 
 import (
 	"context"
-	"errors"
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/openearthplatforminitiative/client-registration-api/models"
 	s "strings"
 )
 
 type Keycloak interface {
+	GetClients(UserName string) (*models.Clients, error)
 	GetUrl() string
-	GetClients(UserName string) ([]*models.Client, error)
 	GetClient(username string, id string) (*models.Client, error)
 	AddClient(client *models.Client) (*models.Client, error)
 	UpdateClient(client *models.Client) (*models.Client, error)
@@ -28,10 +27,8 @@ type KeycloakClient struct {
 }
 
 var (
-	_                 Keycloak = (*KeycloakClient)(nil) // Ensure KeycloakClient implements Keycloak
-	LoginErr                   = errors.New("failed to login to the AdminAPI")
-	ClientLookupErr            = errors.New("failed to lookup clients")
-	ClientNotFoundErr          = errors.New("client with given id was not found")
+	_ Keycloak = (*KeycloakClient)(nil) // Ensure KeycloakClient implements Keycloak
+
 )
 
 func NewKeycloak(url string, user string, pw string, masterRealm string, openEpiRealm string) Keycloak {
@@ -50,15 +47,15 @@ func (k *KeycloakClient) GetUrl() string {
 	return k.KeycloakUrl
 }
 
-func (k *KeycloakClient) GetClients(UserName string) ([]*models.Client, error) {
+func (k *KeycloakClient) GetClients(UserName string) (*models.Clients, error) {
 	token, err := k.AdminClient.LoginAdmin(k.Ctx, k.KeycloakUser, k.KeycloakPassword, k.KeycloakMasterRealm)
 	if err != nil {
-		return nil, LoginErr
+		return nil, models.LoginErr
 	}
 
 	clients, err := k.AdminClient.GetClients(k.Ctx, token.AccessToken, k.KeycloakOpenEpiRealm, gocloak.GetClientsParams{})
 	if err != nil {
-		return nil, ClientLookupErr
+		return nil, models.ClientLookupErr
 	}
 
 	// Filter list of clients by UserName
@@ -69,7 +66,7 @@ func (k *KeycloakClient) GetClients(UserName string) ([]*models.Client, error) {
 		}
 	}
 
-	return clientList, nil
+	return &models.Clients{Clients: clientList}, nil
 }
 
 func (k *KeycloakClient) GetClient(username string, id string) (*models.Client, error) {
@@ -78,19 +75,19 @@ func (k *KeycloakClient) GetClient(username string, id string) (*models.Client, 
 		return nil, err
 	}
 
-	for _, cl := range clients {
+	for _, cl := range clients.Clients {
 		if *cl.ClientID == id {
 			return cl, nil
 		}
 	}
 
-	return nil, ClientNotFoundErr
+	return nil, models.ClientNotFoundErr
 }
 
 func (k *KeycloakClient) AddClient(client *models.Client) (*models.Client, error) {
 	token, err := k.AdminClient.LoginAdmin(k.Ctx, k.KeycloakUser, k.KeycloakPassword, k.KeycloakMasterRealm)
 	if err != nil {
-		return nil, LoginErr
+		return nil, models.LoginErr
 	}
 
 	if _, err = k.AdminClient.CreateClient(k.Ctx, token.AccessToken, k.KeycloakOpenEpiRealm, k.toGocloakClient(client)); err != nil {
@@ -103,7 +100,7 @@ func (k *KeycloakClient) AddClient(client *models.Client) (*models.Client, error
 func (k *KeycloakClient) UpdateClient(client *models.Client) (*models.Client, error) {
 	token, loginErr := k.AdminClient.LoginAdmin(k.Ctx, k.KeycloakUser, k.KeycloakPassword, k.KeycloakMasterRealm)
 	if loginErr != nil {
-		return nil, LoginErr
+		return nil, models.LoginErr
 	}
 
 	if err := k.AdminClient.UpdateClient(k.Ctx, token.AccessToken, k.KeycloakOpenEpiRealm, k.toGocloakClient(client)); err != nil {
@@ -116,12 +113,12 @@ func (k *KeycloakClient) UpdateClient(client *models.Client) (*models.Client, er
 func (k *KeycloakClient) DeleteClient(username string, id string) error {
 	token, err := k.AdminClient.LoginAdmin(k.Ctx, k.KeycloakUser, k.KeycloakPassword, k.KeycloakMasterRealm)
 	if err != nil {
-		return LoginErr
+		return models.LoginErr
 	}
 
 	existingClient, err := k.GetClient(username, id)
 	if err != nil {
-		return ClientNotFoundErr
+		return models.ClientNotFoundErr
 	}
 
 	if err := k.AdminClient.DeleteClient(k.Ctx, token.AccessToken, k.KeycloakOpenEpiRealm, *existingClient.InternalID); err != nil {
