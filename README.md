@@ -2,12 +2,10 @@
 API for registering application clients for users of OpenEPI
 
 ## Generating mocks for unit testing
-We use the tool mockery for generating mocks for unit testing. To install mockery, run the following command:
-```
-brew install mockery
-```
+We use the tool mockery for generating mocks for unit testing. To install mockery, see installation instructions:
+https://vektra.github.io/mockery/latest/installation/
 
-To specify which interfaces to generate mocks for, specify in .mockery.yml file. Example:
+To specify which interfaces to generate mocks for, specify in .mockery.yaml file. Example:
 ```
 with-expecter: True
 dir: tests/mocks/{{.InterfaceDirRelative}}

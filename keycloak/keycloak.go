@@ -4,7 +4,8 @@ import (
 	"context"
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/openearthplatforminitiative/client-registration-api/models"
-	s "strings"
+	"github.com/samber/lo"
+	"strings"
 )
 
 type Keycloak interface {
@@ -58,13 +59,12 @@ func (k *KeycloakClient) GetClients(UserName string) (*models.Clients, error) {
 		return nil, models.ClientLookupErr
 	}
 
-	// Filter list of clients by UserName
-	clientList := make([]*models.Client, 0)
-	for _, cl := range clients {
-		if s.HasPrefix(*cl.ClientID, UserName) {
-			clientList = append(clientList, &models.Client{InternalID: cl.ID, ClientID: cl.ClientID, ClientName: cl.Name, ClientSecret: cl.Secret})
+	clientList := lo.FilterMap(clients, func(c *gocloak.Client, index int) (*models.Client, bool) {
+		if strings.HasPrefix(*c.ClientID, UserName) {
+			return &models.Client{InternalID: c.ID, ClientID: c.ClientID, ClientName: c.Name, ClientSecret: c.Secret}, true
 		}
-	}
+		return nil, false
+	})
 
 	return &models.Clients{Clients: clientList}, nil
 }
@@ -75,13 +75,16 @@ func (k *KeycloakClient) GetClient(username string, id string) (*models.Client, 
 		return nil, err
 	}
 
-	for _, cl := range clients.Clients {
-		if *cl.ClientID == id {
-			return cl, nil
-		}
+	client, found := lo.Find(clients.Clients, func(c *models.Client) bool {
+		return *c.ClientID == id
+	})
+
+	if found {
+		return client, nil
 	}
 
 	return nil, models.ClientNotFoundErr
+
 }
 
 func (k *KeycloakClient) AddClient(client *models.Client) (*models.Client, error) {
