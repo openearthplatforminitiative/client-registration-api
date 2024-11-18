@@ -25,3 +25,5 @@ go.work.sum
 .env
 
 .idea/
+.vscode/
+__debug_bin*
