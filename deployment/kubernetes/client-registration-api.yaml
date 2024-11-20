@@ -57,24 +57,24 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: auth-secrets
-                  key: client_id
+                  key: user_client_id
             - name: OAUTH2_PROXY_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: auth-secrets
-                  key: client_secret
+                  key: user_client_secret
             - name: OAUTH2_PROXY_COOKIE_SECRET
               valueFrom:
                 secretKeyRef:
                   name: auth-secrets
-                  key: cookie_secret
+                  key: user_cookie_secret
             - name: OAUTH2_PROXY_REDIRECT_URL
               value: /oauth2/callback
             - name: OAUTH2_PROXY_OIDC_ISSUER_URL
               valueFrom:
                 secretKeyRef:
                   name: auth-secrets
-                  key: auth_url
+                  key: user_auth_url
             - name: OAUTH2_PROXY_COOKIE_SECURE
               value: "true"
             - name: OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL
@@ -145,6 +145,19 @@ spec:
         - X-Auth-Request-Username
         - X-Auth-Request-Preferred-Username
         - Authorization
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cors-client-registration
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+    accessControlAllowHeaders:
+      - "*"
+    accessControlAllowOriginList:
+      - "*"
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
