@@ -61,6 +61,6 @@ func Setup() {
 		KeycloakUser:         getEnv("KC_USER", "admin"),
 		KeycloakPassword:     getEnv("KC_PASSWORD", "-"),
 		KeycloakMasterRealm:  getEnv("KC_MASTER_REALM", "master"),
-		KeycloakOpenEpiRealm: getEnv("KC_MASTER_REALM", "openepi"),
+		KeycloakOpenEpiRealm: getEnv("KC_USER_REALM", "openepi"),
 	}
 }

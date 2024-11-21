@@ -43,6 +43,11 @@ spec:
                 secretKeyRef:
                   name: auth-secrets
                   key: admin_password
+            - name: KC_USER_REALM
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: user_auth_realm
       initContainers:
         - name: client-registration-auth
           image: quay.io/oauth2-proxy/oauth2-proxy:v7.2.1
