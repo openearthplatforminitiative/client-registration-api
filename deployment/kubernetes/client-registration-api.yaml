@@ -74,7 +74,7 @@ spec:
                   name: auth-secrets
                   key: user_cookie_secret
             - name: OAUTH2_PROXY_REDIRECT_URL
-              value: /oauth2/callback
+              value: /client-registration/oauth2/callback
             - name: OAUTH2_PROXY_OIDC_ISSUER_URL
               valueFrom:
                 secretKeyRef:
@@ -105,8 +105,10 @@ spec:
             - name: OAUTH2_PROXY_SESSION_COOKIE_MINIMAL
               value: "true"
             - name: OAUTH2_PROXY_PROXY_PREFIX
-              value: "/oauth2"
+              value: "/client-registration/oauth2"
             - name: OAUTH2_PROXY_ALLOW_RELATIVE_REDIRECT_URL
+              value: "true"
+            - name: OAUTH2_PROXY_FORCE_JSON_ERRORS
               value: "true"
 ---
 apiVersion: v1
@@ -173,7 +175,7 @@ spec:
     - websecure
   routes:
   - kind: Rule
-    match: PathPrefix(`/client-registration`) && !PathPrefix(`/client-registration/metrics`)
+    match: PathPrefix(`/client-registration`) && !PathPrefix(`/client-registration/metrics`) && !PathPrefix(`/client-registration/oauth2`)
     services:
     - kind: Service
       name: client-registration-api
@@ -182,7 +184,7 @@ spec:
     - name: client-registration-auth
     - name: stripprefix-client-registration
   - kind: Rule
-    match: PathPrefix(`/oauth2`) && !PathPrefix(`/oauth2/metrics`)
+    match: PathPrefix(`/client-registration/oauth2`) && !PathPrefix(`/client-registration/oauth2/metrics`)
     services:
     - kind: Service
       name: client-registration-api

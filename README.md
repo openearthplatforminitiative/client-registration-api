@@ -1,6 +1,8 @@
 # client-registration-api
 API for registering application clients for users of OpenEPI
 
+*NB!* This service needs to run in the same cluster as our authentication solution.
+
 ## Generating mocks for unit testing
 We use the tool mockery for generating mocks for unit testing. To install mockery, see installation instructions:
 https://vektra.github.io/mockery/latest/installation/
