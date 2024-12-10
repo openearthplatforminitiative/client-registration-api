@@ -183,6 +183,7 @@ spec:
       name: client-registration-api
       port: 80
     middlewares:
+    - name: traefikmiddleware-cors@kubernetescrd
     - name: client-registration-auth
     - name: stripprefix-client-registration
   - kind: Rule
