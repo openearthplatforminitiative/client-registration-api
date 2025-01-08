@@ -13,7 +13,7 @@ spec:
   source:
     path: deployment/kubernetes/
     repoURL: https://github.com/openearthplatforminitiative/client-registration-api
-    targetRevision: removing-oauth2-proxy-in-favor-of-jwt-middleware
+    targetRevision: HEAD
   syncPolicy:
     automated:
       prune: true
