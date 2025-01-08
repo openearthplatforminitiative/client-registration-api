@@ -184,7 +184,7 @@ spec:
       port: 80
     middlewares:
     - name: traefikmiddleware-cors-for-internal-apps@kubernetescrd
-    - name: client-registration-auth
+    - name: traefikmiddleware-jwt@kubernetescrd
     - name: stripprefix-client-registration
   - kind: Rule
     match: PathPrefix(`/client-registration/oauth2`) && !PathPrefix(`/client-registration/oauth2/metrics`)
