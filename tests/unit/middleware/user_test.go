@@ -1,12 +1,13 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/openearthplatforminitiative/client-registration-api/middleware"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/openearthplatforminitiative/client-registration-api/middleware"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUserRequired(t *testing.T) {
@@ -51,7 +52,7 @@ func TestUserRequired(t *testing.T) {
 
 			req, _ := http.NewRequest("GET", "/test", nil)
 			if tc.usernameHeader != "" {
-				req.Header.Set("X-Auth-Request-Preferred-Username", tc.usernameHeader)
+				req.Header.Set("X-Preferred-Username", tc.usernameHeader)
 			}
 
 			router.ServeHTTP(w, req)
